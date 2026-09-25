@@ -197,13 +197,29 @@ def parse_ptbr_int_from_text(text):
     match = _PTBR_INT_RE.fullmatch(_normalize_spaces(text))
     return int(match[1].replace(".", "")) if match else None
 
+def counter_ready(driver):
+    for elem in driver.find_elements(By.CSS_SELECTOR, VIEW_SELECTOR):
+        try:
+            if not elem.is_displayed():
+                continue
+            if parse_ptbr_int_from_text(elem.get_attribute("aria-label")) is not None:
+                return True
+            if not elem.find_elements(By.CSS_SELECTOR, "yt-animated-rolling-number, yt-animated-number"):
+                if parse_ptbr_int_from_text(elem.text) is not None:
+                    return True
+        except Exception:
+            # DOM can be replaced while the live metadata is loading.
+            continue
+    return False
+
+
 def extract_viewers_for_url(driver, youtube_live_url, retry_reads=3, retry_sleep_ms=1000):
     from urllib.parse import urlparse, parse_qs
     expected = parse_qs(urlparse(youtube_live_url).query).get("v", [None])[0]
     if not expected:
         raise ValueError("Use URL completa https://www.youtube.com/watch?v=ID")
     driver.get(youtube_live_url)
-    last_raw = ""
+    last_raw = "indisponível: contador não preenchido pelo YouTube"
     for _ in range(max(1, retry_reads)):
         try:
             root = WebDriverWait(driver, 8).until(
@@ -220,6 +236,11 @@ def extract_viewers_for_url(driver, youtube_live_url, retry_reads=3, retry_sleep
                 raise ValueError("Identidade do vídeo não confirmada")
             if not (video.get("isLive") is True or live.get("isLiveNow") is True):
                 raise ValueError("Transmissão não confirmada como ao vivo")
+            # The element exists before YouTube fills its accessible counter.
+            # Wait for parseable content, not merely for the page structure.
+            WebDriverWait(driver, 8, poll_frequency=0.5).until(
+                counter_ready,
+                message="Contador principal ainda vazio ou sem número exato")
             elems = driver.find_elements(By.CSS_SELECTOR, VIEW_SELECTOR)
             # aria-label has precedence across all main-video candidates.
             for source in ("aria-label", "text"):

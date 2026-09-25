@@ -134,6 +134,28 @@ class Tests(unittest.TestCase):
             self.assertFalse(core.send_daily_report(self.env,str(Path(self.tmp.name)/'missing.csv')))
             smtp.assert_not_called()
 
+    def test_counter_waits_until_aria_label_is_filled(self):
+        driver = MagicMock()
+        elem = MagicMock()
+        elem.is_displayed.return_value = True
+        elem.get_attribute.side_effect = ['', '', '1.684 assistindo agora']
+        driver.find_elements.return_value = [elem]
+        # Presence and visibility alone must not satisfy the wait.
+        self.assertFalse(core.counter_ready(driver))
+        self.assertFalse(core.counter_ready(driver))
+        self.assertTrue(core.counter_ready(driver))
+
+    def test_counter_wait_accepts_zero_but_rejects_animation(self):
+        driver = MagicMock()
+        elem = MagicMock()
+        elem.is_displayed.return_value = True
+        elem.get_attribute.return_value = ''
+        elem.text = '1215645 assistindo agora'
+        elem.find_elements.return_value = [MagicMock()]
+        driver.find_elements.return_value = [elem]
+        self.assertFalse(core.counter_ready(driver))
+        elem.get_attribute.return_value = '0 assistindo agora'
+        self.assertTrue(core.counter_ready(driver))
+
 
 if __name__=='__main__': unittest.main()
-
