@@ -1,0 +1,16 @@
+AGENDA DE RELATORIOS - ATUALIZACAO LOCAL
+
+1. Desabilite temporariamente a tarefa do monitor ou encerre o modo continuo.
+2. Extraia este pacote em Downloads (fora de C:\scripts).
+3. Execute instalar.bat e digite INSTALAR. O instalador guarda backup dos arquivos existentes e preserva .env, dados e estados.
+4. Abra C:\scripts\abrir_agenda.bat. A tela abre no navegador neste computador.
+5. Selecione Datas e horas cadastradas; adicione data e hora; clique em Salvar agenda.
+6. Reative a tarefa OU inicie o modo continuo. Use apenas uma opcao.
+
+Manter a tela aberta nao inicia a coleta nem envia e-mails. Voce pode fecha-la depois de salvar.
+No modo continuo a agenda e relida a cada aproximadamente 5 segundos; pelo Agendador, na proxima execucao.
+A tolerancia do .env continua valendo. Horarios vencidos fora da tolerancia nao sao enviados automaticamente.
+Sem agenda salva, os horarios diarios anteriores continuam funcionando.
+
+Este pacote local usa o Python ja existente na maquina A12. Para outra maquina, configure MONITOR_PYTHON com o caminho do Python ou use venv\Scripts\python.exe ao lado dos scripts.
+Consulte agenda.md para comportamento e limites.

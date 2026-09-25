@@ -10,6 +10,7 @@ from contextlib import contextmanager
 from datetime import timedelta
 import msvcrt
 import monitor_youtube_live_multi as core
+import report_schedule as agenda
 
 
 @contextmanager
@@ -58,9 +59,13 @@ def read_json(path):
 
 
 def daily_times(env):
-    raw = str(core.getenv(env, 'DAILY_SEND_TIMES', '') or '').strip()
+    configured = core.getenv(env, 'DAILY_SEND_TIMES', None)
+    raw = str(configured or '').strip()
     if not raw:
-        raw = f"{int(core.getenv(env, 'DAILY_SEND_HOUR', 0)):02}:{int(core.getenv(env, 'DAILY_SEND_MINUTE', 1)):02}"
+        # Explicitly blank disables daily sends, even with legacy hour settings.
+        if configured is not None or core.getenv(env, 'DAILY_SEND_HOUR', None) is None:
+            return []
+        raw = f"{int(core.getenv(env, 'DAILY_SEND_HOUR')):02}:{int(core.getenv(env, 'DAILY_SEND_MINUTE', 0)):02}"
     result = set()
     for part in raw.replace(',', ';').split(';'):
         part = part.strip()
@@ -121,7 +126,10 @@ def reports(env, csv_path, now=None):
                 finish_cleanup(csv_path, record)
                 record['status'] = 'done'
                 write_json(journal_path, journal)
-    slots = {slot.isoformat(): slot for slot in due_slots(now, daily_times(env), tolerance)}
+    schedule = agenda.read_schedule()
+    planned = (agenda.due_dates(schedule, now, tolerance) if schedule['mode'] == 'dates'
+               else due_slots(now, daily_times(env), tolerance))
+    slots = {slot.isoformat(): slot for slot in planned}
     # Once prepared, a report survives an expired schedule window.
     for key, record in journal.items():
         if record['status'] == 'prepared':
@@ -200,6 +208,7 @@ def main():
     parser.add_argument('--csv', default=r'C:\logs\dados_live.csv')
     parser.add_argument('--env', default=r'C:\scripts\.env')
     parser.add_argument('--url', action='append', default=[])
+    parser.add_argument('--stop-file')
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--continuous', action='store_true')
     mode.add_argument('--collect-only', action='store_true')
@@ -209,7 +218,9 @@ def main():
     args = parser.parse_args()
     args.csv = str(Path(args.csv).resolve())
     env = core.read_env(args.env)
-    daily_times(env)
+    schedule = agenda.read_schedule()
+    if schedule['mode'] == 'daily':
+        daily_times(env)
     core.tz_now()  # Fail early if tzdata is missing.
     if not args.url and not (args.report_only or args.test_daily_email or args.force_daily_email):
         parser.error('Informe ao menos uma --url')
@@ -239,19 +250,22 @@ def main():
             next_report = 0
             started = 0
             result = 0
-            core.log(f'[início] modo={"contínuo" if args.continuous else "único"} horários={daily_times(env)} fuso=America/Sao_Paulo')
+            core.log(f'[início] modo={"contínuo" if args.continuous else "único"} agenda={schedule["mode"]} fuso=America/Sao_Paulo')
             try:
                 while True:
+                    if args.stop_file and Path(args.stop_file).exists():
+                        return result
                     clock = time.monotonic()
                     if clock >= next_report:
                         try:
+                            env = core.read_env(args.env)
                             reports(env, args.csv)
                         except Exception as exc:
                             result = 1
                             core.log(f'[relatório] {exc}')
                         next_report = time.monotonic() + 5
                     if child is None and clock >= next_collect:
-                        command = [sys.executable, str(Path(core.__file__).resolve()), '--collect-only', '--csv', args.csv, '--env', str(Path(args.env).resolve())]
+                        command = ([sys.executable, '--worker'] if getattr(sys, 'frozen', False) else [sys.executable, str(Path(core.__file__).resolve())]) + ['--collect-only', '--csv', args.csv, '--env', str(Path(args.env).resolve())]
                         for url in args.url:
                             command.extend(['--url', url])
                         child = subprocess.Popen(command, creationflags=subprocess.CREATE_NO_WINDOW)

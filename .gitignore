@@ -11,8 +11,17 @@ __pycache__/
 *.tmp
 *.send-journal.json
 daily_send_state.json
+report_schedule.json
+dashboard_cache.json
 last_error_alert.json
 .last*sent*
 backup_monitor_*/
 logs/*
 !logs/.gitkeep
+
+build/
+dist/
+*.spec
+app_settings.json
+stop.request
+

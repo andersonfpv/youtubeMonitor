@@ -20,6 +20,7 @@ Para instalação em `C:\scripts`, siga o [guia de instalação](docs/guia_insta
 
 - `scripts\iniciar_continuo.bat`: coleta a cada 180 segundos e verifica relatórios a cada aproximadamente 5 segundos, enquanto o computador estiver acordado. Ctrl+C encerra.
 - `scripts\rodar_monitor.bat`: uma rodada, compatível com a tarefa existente. O VBS aguarda o processo e propaga seu resultado.
+- `scripts\abrir_dashboard.bat`: abre o dashboard local de picos por link, dia e hora. Consulte [dashboard](docs/dashboard.md).
 
 Desabilite a tarefa antiga antes de usar o modo contínuo. Para início no boot e recuperação automática, o modo contínuo pode ser instalado como serviço via [WinSW](https://github.com/winsw/winsw); isso não é feito automaticamente.
 
@@ -59,3 +60,7 @@ Testes não acessam YouTube nem enviam e-mails. Veja [validação e migração](
 Somente `.env.example` deve ser versionado. CSV, logs, snapshots, credenciais e estados são locais e estão no `.gitignore`. A versão antiga incluía configuração SMTP no histórico público: revogue qualquer credencial real publicada antes de reutilizar a conta. A remoção na versão atual não limpa commits antigos.
 
 Os documentos `.docx` existentes são históricos e não foram atualizados; os guias Markdown são a referência desta versão. `ALERT_ERROR_*` e `ANOMALY_LOG` antigos não implementam alertas de erro; a operação deve acompanhar os logs. Serviço Windows, monitor externo de saúde e retenção de arquivos são melhorias futuras.
+
+## Aplicativo Windows integrado (2.0)
+
+O instalador inclui Python e cria pastas e atalhos. Consulte [instalação e uso do aplicativo](docs/aplicativo-windows.md). A tela reúne Audiência, Agenda, Configurações SMTP e controles Iniciar/Parar/Sair. Para executar a versão em código, use `python scripts/app.py`; o perfil novo usa a pasta de dados do usuário e começa com agenda vazia. A execução antiga em `C:\scripts` continua sendo uma instalação independente.

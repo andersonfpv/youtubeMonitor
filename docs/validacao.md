@@ -24,9 +24,3 @@ Antes de atualizar um checkout existente com git pull, copie .env, estados, CSVs
 Se a senha SMTP publicada na versão anterior era real, revogue-a no provedor e configure uma nova localmente. Retirar o arquivo da árvore atual não remove a credencial do histórico público.
 
 As melhorias futuras recomendadas são serviço Windows, monitor externo de ausência de coleta, rotação/retenção de logs e snapshots e avaliação da API oficial do YouTube. Nenhuma dessas capacidades deve ser presumida como instalada.
-
-## Correção posterior: carregamento do contador
-
-O elemento #view-count aparece antes de seu aria-label receber o número. A coleta agora aguarda conteúdo válido, com consultas a cada 0,5 segundo e até 8 segundos por tentativa, mantendo os retries existentes. Números animados continuam rejeitados no fallback textual.
-
-Validação: 17 testes automatizados aprovados. Coleta real nas duas lives confirmada em 25/09/2026; o teste do usuário às 10:21 registrou 1.527 e 5.180 espectadores, respectivamente. Esta validação não confirma o envio SMTP agendado, que permanece em teste operacional.

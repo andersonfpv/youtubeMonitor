@@ -26,7 +26,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 
 # ----------------- Paths / estado -----------------
-HERE = os.path.abspath(os.path.dirname(__file__))
+HERE = os.environ.get('MONITOR_HOME', os.path.abspath(os.path.dirname(__file__)))
 STATE_FILE = os.path.join(HERE, "daily_send_state.json")
 
 
